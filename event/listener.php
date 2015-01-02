@@ -153,7 +153,36 @@ class listener implements EventSubscriberInterface
 			{
 				// Somehow I am not able to pass the errors back to the event.. weird..
 				$event['submit'] = false;
-				$this->error = array_map(array($this->user, 'lang', $error));
+				$this->error = $error;
+
+				// Retrieve the errors that would have occured if we wouldn't exist :/
+				$error = validate_data($event['data'], array(
+					'topic_sk'	=> array(
+						array('string', false, 1, 1),
+						array('match', false, '#(a|r|s|t|v)#'),
+					),
+					'topic_sd'	=> array(
+						array('string', false, 1, 1),
+						array('match', false, '#(a|d)#'),
+					),
+					'post_sk'	=> array(
+						array('string', false, 1, 1),
+						array('match', false, '#(a|s|t)#'),
+					),
+					'post_sd'	=> array(
+						array('string', false, 1, 1),
+						array('match', false, '#(a|d)#'),
+					),
+				));
+				$this->error = array_merge($error, $this->error);
+
+				if (!check_form_key('ucp_prefs_view'))
+				{
+					$this->error[] = 'FORM_INVALID';
+				}
+
+				// Now replace them with their localised form
+				$this->error = array_map(array($this->user, 'lang'), $this->error);
 			}
 		}
 
@@ -254,11 +283,10 @@ class listener implements EventSubscriberInterface
 	{
 		$data = $event['data'];
 
-		$sql_ary = array(
+		$event['sql_ary'] = array_merge($event['sql_ary'], array(
 			'user_posts_per_page'	=> $data['posts_pp'],
 			'user_topics_per_page'	=> $data['topics_pp'],
-		);
-		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
+		););
 	}
 
 	/**
@@ -275,6 +303,6 @@ class listener implements EventSubscriberInterface
 			return;
 		}
 
-		$this->template->assign_var('ERROR', implode('<br />', array_merge($event['error'], $this->error)));
+		$this->template->assign_var('ERROR', implode('<br />', $this->error));
 	}
 }
