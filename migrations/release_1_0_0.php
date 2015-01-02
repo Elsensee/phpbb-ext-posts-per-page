@@ -16,8 +16,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 		return array(
 			'add_columns'		=> array(
 				$this->table_prefix . 'users'	=> array(
-					'user_posts_per_page'	=> array('TINT:2', 0, 'after' => 'user_post_sortby_dir'),
-					'user_topics_per_page'	=> array('TINT:2', 0, 'after' => 'user_topics_sortby_dir'),
+					'user_posts_per_page'	=> array('USINT', 0, 'after' => 'user_post_sortby_dir'),
+					'user_topics_per_page'	=> array('USINT', 0, 'after' => 'user_topics_sortby_dir'),
 				),
 			),
 		);
@@ -38,8 +38,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 	public function update_data()
 	{
 		return array(
-			array('config.add', array('ppp_maximum_ppp', -1)),
-			array('config.add', array('ppp_maximum_tpp', -1)),
+			array('config.add', array('ppp_maximum_ppp', 0)),
+			array('config.add', array('ppp_maximum_tpp', 0)),
 		);
 	}
 }

@@ -78,11 +78,48 @@ class listener implements EventSubscriberInterface
 	{
 		return array(
 			'core.acp_board_config_edit_add'		=> 'add_configuration',
-			'core.ucp_prefs_modify_common'			=> 'modify_pref_before_load',
+			'core.acp_users_prefs_modify_sql'		=> 'update_config_in_acp_users',
+			'core.acp_users_prefs_modify_template_data'	=> 'add_config_to_acp_users',
+			'core.ucp_prefs_modify_common'			=> 'modify_ucp_pref_before_load',
 			'core.ucp_prefs_view_data'				=> 'add_config_to_ucp',
 			'core.ucp_prefs_view_update_data'		=> 'update_config_in_ucp',
 			'core.user_setup'						=> 'modify_per_page_config',
 		);
+	}
+
+	/**
+	* Add configuration items for ppp-extension to ACP users
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function add_config_to_acp_users($event)
+	{
+		$this->validate_config();
+
+		if (!$this->config['ppp_maximum_ppp'] && !$this->config['ppp_maximum_tpp'])
+		{
+			return;
+		}
+
+		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
+
+		$data = $event['data'];
+		// If I already did this I don't have to do it again
+		if (!isset($data['posts_pp']) && !isset($data['topics_pp']))
+		{
+			$this->validate_request_vars($data, $event['user_row'], false);
+		}
+
+		$event['user_prefs_data'] = array_merge($event['users_prefs_data'], array(
+			'POSTS_PP'			=> (isset($data['posts_pp'])) ? $data['posts_pp'] : 0,
+			'POSTS_PP_CONFIG'	=> $this->config['posts_per_page'],
+			'POSTS_PP_MAX'		=> $this->config['ppp_maximum_ppp'],
+			'TOPICS_PP'			=> (isset($data['topics_pp'])) ? $data['topics_pp'] : 0,
+			'TOPICS_PP_CONFIG'	=> $this->config['topics_per_page'],
+			'TOPICS_PP_MAX'		=> $this->config['ppp_maximum_tpp'],
+		));
 	}
 
 	/**
@@ -94,101 +131,61 @@ class listener implements EventSubscriberInterface
 	*/
 	public function add_config_to_ucp($event)
 	{
-		// Unexpected case!
-		if ($this->config_changed)
-		{
-			$sql = 'SELECT config_name, config_value
-				FROM ' . CONFIG_TABLE . '
-				WHERE ' $this->db->sql_in_set('config_name', array('posts_per_page', 'topics_per_page'));
-			$result = $this->db->sql_query($sql, 60);
-
-			while ($row = $this->db->sql_fetchrow($result))
-			{
-				$this->config[$row['config_name']] = (int) $row['config_value'];
-			}
-			$this->db->sql_freeresult($result);
-		}
+		$this->validate_config();
 
 		if (!$this->config['ppp_maximum_ppp'] && !$this->config['ppp_maximum_tpp'])
 		{
 			return;
 		}
 
-		$data = $validate_array = array();
-		$posts_pp = $topics_pp = 0;
+		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
 
-		if ($this->config['ppp_maximum_ppp'])
+		$data = array();
+		$error = $this->validate_request_vars($data, $this->user->data, $event['submit']);
+
+		if ($event['submit'] && sizeof($error))
 		{
-			$posts_pp = $this->request->variable('posts_pp', (int) $this->user->data['user_posts_per_page']);
-			$data['posts_pp'] = $posts_pp;
-			$min = 0;
-			$max = max($this->config['ppp_maximum_ppp'], $this->config['posts_per_page']);
-			if ($this->config['ppp_maximum_ppp'] == -1)
+			// Somehow I am not able to pass the errors back to the event.. weird..
+			$event['submit'] = false;
+			$this->error = $error;
+
+			// Retrieve the errors that would have occured if we wouldn't exist :/
+			$error = validate_data($event['data'], array(
+				'topic_sk'	=> array(
+					array('string', false, 1, 1),
+					array('match', false, '#(a|r|s|t|v)#'),
+				),
+				'topic_sd'	=> array(
+					array('string', false, 1, 1),
+					array('match', false, '#(a|d)#'),
+				),
+				'post_sk'	=> array(
+					array('string', false, 1, 1),
+					array('match', false, '#(a|s|t)#'),
+				),
+				'post_sd'	=> array(
+					array('string', false, 1, 1),
+					array('match', false, '#(a|d)#'),
+				),
+			));
+			$this->error = array_merge($error, $this->error);
+
+			if (!check_form_key('ucp_prefs_view'))
 			{
-				$min = -1;
-				$max = 125;
+				$this->error[] = 'FORM_INVALID';
 			}
-			$validate_array['posts_pp'] = array('num', false, $min, $max);
-		}
-		if ($this->config['ppp_maximum_tpp'])
-		{
-			$topics_pp = $this->request->variable('topics_pp', (int) $this->user->data['user_topics_per_page']);
-			$data['topics_pp'] = $topics_pp;
-			$min = 0;
-			$max = max($this->config['ppp_maximum_tpp'], $this->config['topics_per_page']);
-			if ($this->config['ppp_maximum_tpp'] == -1)
-			{
-				$min = -1;
-				$max = 125;
-			}
-			$validate_array['topics_pp'] = array('num', false, $min, $max);
-		}
 
-		$this->user->add_lang_ext('elsensee/postsperpage', 'common'); // $result . '_' . strtoupper($var) (TOO_SMALL or TOO_LARGE)
-
-		if ($event['submit'])
-		{
-			$error = validate_data($data, $validate_array);
-			if (sizeof($error))
-			{
-				// Somehow I am not able to pass the errors back to the event.. weird..
-				$event['submit'] = false;
-				$this->error = $error;
-
-				// Retrieve the errors that would have occured if we wouldn't exist :/
-				$error = validate_data($event['data'], array(
-					'topic_sk'	=> array(
-						array('string', false, 1, 1),
-						array('match', false, '#(a|r|s|t|v)#'),
-					),
-					'topic_sd'	=> array(
-						array('string', false, 1, 1),
-						array('match', false, '#(a|d)#'),
-					),
-					'post_sk'	=> array(
-						array('string', false, 1, 1),
-						array('match', false, '#(a|s|t)#'),
-					),
-					'post_sd'	=> array(
-						array('string', false, 1, 1),
-						array('match', false, '#(a|d)#'),
-					),
-				));
-				$this->error = array_merge($error, $this->error);
-
-				if (!check_form_key('ucp_prefs_view'))
-				{
-					$this->error[] = 'FORM_INVALID';
-				}
-
-				// Now replace them with their localised form
-				$this->error = array_map(array($this->user, 'lang'), $this->error);
-			}
+			// Now replace them with their localised form
+			$this->error = array_map(array($this->user, 'lang'), $this->error);
 		}
 
 		$this->template->assign_vars(array(
-			'POSTS_PP'	=> $posts_pp,
-			'TOPICS_PP'	=> $topics_pp,
+			'POSTS_PP'			=> (isset($data['posts_pp'])) ? $data['posts_pp'] : 0,
+			'POSTS_PP_CONFIG'	=> $this->config['posts_per_page'],
+			'POSTS_PP_MAX'		=> $this->config['ppp_maximum_ppp'],
+			'TOPICS_PP'			=> (isset($data['topics_pp'])) ? $data['topics_pp'] : 0,
+			'TOPICS_PP_CONFIG'	=> $this->config['topics_per_page'],
+			'TOPICS_PP_MAX'		=> $this->config['ppp_maximum_tpp'],
 		));
 		$event['data'] = array_merge($event['data'], $data);
 	}
@@ -216,8 +213,8 @@ class listener implements EventSubscriberInterface
 		$vars['vars']['posts_per_page']['explain'] = true;
 
 		$own_vars = array(
-			'ppp_maximum_tpp'	=> array('lang' => 'PPP_TOPICS_PER_PAGE_MAXIMUM',	'validate' => 'int:-1:125',	'type' => 'number:-1:125',	'explain' => true),
-			'ppp_maximum_ppp'	=> array('lang' => 'PPP_POSTS_PER_PAGE_MAXIMUM',	'validate' => 'int:-1:125',	'type' => 'number:-1:125',	'explain' => true),
+			'ppp_maximum_tpp'	=> array('lang' => 'PPP_TOPICS_PER_PAGE_MAXIMUM',	'validate' => 'int:0:9999',	'type' => 'number:0:9999',	'explain' => true),
+			'ppp_maximum_ppp'	=> array('lang' => 'PPP_POSTS_PER_PAGE_MAXIMUM',	'validate' => 'int:0:9999',	'type' => 'number:0:9999',	'explain' => true),
 		);
 		// Insert our own_vars array right after posts_per_page to let them appear right there.
 		$vars['vars'] = array_insert($vars['vars'], array_search('posts_per_page', array_keys($vars['vars'])), $own_vars);
@@ -253,13 +250,12 @@ class listener implements EventSubscriberInterface
 	public function modify_per_page_config($event)
 	{
 		// We may not modify it here - we would get unexpected results. (At least that's what I expect)
-		if (defined('ADMIN_START') || stripos($this->helper->get_current_url(), 'ucp.php') !== false)
+		if (defined('ADMIN_START') || stripos($this->helper->get_current_url(), 'ucp.php') !== false || $this->config_changed)
 		{
 			return;
 		}
 
 		// Remember: We overwrite these config values temporarily
-		// @TODO: -1 wont work..... hmmm
 		if ($this->config['ppp_maximum_tpp'] && $this->user->data['user_topics_per_page'])
 		{
 			$this->config['topics_per_page'] = $this->user->data['user_topics_per_page'];
@@ -283,10 +279,54 @@ class listener implements EventSubscriberInterface
 	{
 		$data = $event['data'];
 
-		$event['sql_ary'] = array_merge($event['sql_ary'], array(
-			'user_posts_per_page'	=> $data['posts_pp'],
-			'user_topics_per_page'	=> $data['topics_pp'],
-		););
+		$sql_ary = array();
+		if (isset($data['posts_pp']))
+		{
+			$sql_ary['user_posts_per_page'] = $data['posts_pp'];
+		}
+		if (isset($data['topics_pp']))
+		{
+			$sql_ary['user_topics_per_page'] = $data['topics_pp'];
+		}
+		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
+	}
+
+	/**
+	* Updates users config when in ACP users
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function update_config_in_acp_users($event)
+	{
+		$this->validate_config();
+
+		if (!$this->config['ppp_maximum_ppp'] && !$this->config['ppp_maximum_tpp'])
+		{
+			return;
+		}
+
+		$data = array();
+		$error = $this->validate_request_vars($data, $event['user_row'], true);
+		if (sizeof($error))
+		{
+			$event['data'] = array_merge($event['data'], $data); // Telling myself that I already did this...
+			$event['error'] = array_merge($event['error'], $error);
+			return;
+		}
+
+		$sql_ary = array();
+		if (isset($data['posts_pp']))
+		{
+			$sql_ary['user_posts_per_page'] = $data['posts_pp'];
+		}
+		if (isset($data['topics_pp']))
+		{
+			$sql_ary['user_topics_per_page'] = $data['topics_pp'];
+		}
+
+		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
 	}
 
 	/**
@@ -296,7 +336,7 @@ class listener implements EventSubscriberInterface
 	* @return null
 	* @access public
 	*/
-	public function modify_pref_before_load($event)
+	public function modify_ucp_pref_before_load($event)
 	{
 		if ($event['mode'] != 'view' || !sizeof($this->error))
 		{
@@ -304,5 +344,62 @@ class listener implements EventSubscriberInterface
 		}
 
 		$this->template->assign_var('ERROR', implode('<br />', $this->error));
+	}
+
+	/**
+	* Validates the config object so no wrong values are in there
+	*
+	* @return null
+	* @access protected
+	*/
+	protected function validate_config()
+	{
+		// A somehow unexpected case!
+		if ($this->config_changed)
+		{
+			$sql = 'SELECT config_name, config_value
+				FROM ' . CONFIG_TABLE . '
+				WHERE ' $this->db->sql_in_set('config_name', array('posts_per_page', 'topics_per_page'));
+			$result = $this->db->sql_query($sql, 60);
+
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$this->config[$row['config_name']] = (int) $row['config_value'];
+			}
+			$this->db->sql_freeresult($result);
+
+			$this->config_changed = false;
+		}
+	}
+
+	/**
+	* Validates the variables given by the page per request
+	*
+	* @param array	&$data		Array with data which will be given by reference
+	* @param array	$user_row	Array with user data
+	* @param bool	$validate	true if validate, false if not (and return an empty array)
+	* @return array				Array with errors occured at validation
+	* @access protected
+	*/
+	protected function validate_request_vars(&$data, $user_row, $validate)
+	{
+		$validate_array = array();
+
+		if ($this->config['ppp_maximum_ppp'])
+		{
+			$data['posts_pp'] = $this->request->variable('posts_pp', (int) $user_row['user_posts_per_page']);
+			$validate_array['posts_pp'] = array('num', false, 0, max($this->config['ppp_maximum_ppp'], $this->config['posts_per_page']));
+		}
+		if ($this->config['ppp_maximum_tpp'])
+		{
+			$data['topics_pp'] = $this->request->variable('topics_pp', (int) $user_row['user_topics_per_page']);
+			$validate_array['topics_pp'] = array('num', false, 0, max($this->config['ppp_maximum_tpp'], $this->config['topics_per_page']));
+		}
+
+		if ($validate)
+		{
+			return validate_data($data, $validate_array);
+		}
+		return array();
 	}
 }
