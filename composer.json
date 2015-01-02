@@ -1,0 +1,25 @@
+{
+   "name": "elsensee/postsperpage",
+   "type": "phpbb-extension",
+   "description": "An extension which allows users to set their own posts-per-page-setting",
+   "homepage": "https://github.com/Elsensee/phpbb-ext-posts-per-page",
+   "version": "1.0.0",
+   "time": "2015-01-02",
+   "license": "GPL-2.0",
+   "authors": [{
+      "name": "Oliver Schramm",
+      "email": "elsensee@phpbb.de",
+      "homepage": "https://github.com/Elsensee",
+      "role": "Lead Developer"
+   }],
+   "require": {
+      "php": ">=5.3.3",
+      "composer/installers": "~1.0"
+   },
+   "extra": {
+      "display-name": "Individual posts per page",
+      "soft-require" : {
+         "phpbb/phpbb": ">=3.1.0-a1,<3.2.*@dev"
+      }
+   }
+}

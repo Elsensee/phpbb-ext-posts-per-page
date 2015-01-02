@@ -1,0 +1,10 @@
+services:
+    elsensee.postsperpage.listener:
+        class: elsensee\postsperpage\event\listener
+        arguments:
+            - @config
+            - @controller.helper
+            - @dbal.conn
+            - @request
+            - @template
+            - @user
