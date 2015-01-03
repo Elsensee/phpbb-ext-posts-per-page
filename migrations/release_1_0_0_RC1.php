@@ -9,7 +9,7 @@
 
 namespace elsensee\postsperpage\migrations;
 
-class release_1_0_0 extends \phpbb\db\migration\migration
+class release_1_0_0_RC1 extends \phpbb\db\migration\migration
 {
 	public function update_schema()
 	{

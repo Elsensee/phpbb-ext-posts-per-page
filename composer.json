@@ -1,9 +1,9 @@
 {
 	"name": "elsensee/postsperpage",
 	"type": "phpbb-extension",
-	"description": "An extension which allows users to set their own posts per page.",
+	"description": "An extension which allows users to set their own posts per page settings.",
 	"homepage": "https://github.com/Elsensee/phpbb-ext-posts-per-page",
-	"version": "1.0.0",
+	"version": "1.0.0-RC1",
 	"time": "2015-01-03",
 	"license": "GPL-2.0",
 	"authors": [
