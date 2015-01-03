@@ -22,9 +22,6 @@ class listener implements EventSubscriberInterface
 	/** @var \phpbb\config\config */
 	protected $config;
 
-	/** @var bool */
-	protected $config_changed;
-
 	/** @var \phpbb\db\driver\driver_interface */
 	protected $db;
 
@@ -36,6 +33,9 @@ class listener implements EventSubscriberInterface
 
 	/** @var \phpbb\request\request */
 	protected $request;
+
+	/** @var array */
+	protected $settings;
 
 	/** @var \phpbb\template\template */
 	protected $template;
@@ -52,16 +52,17 @@ class listener implements EventSubscriberInterface
 	* @param \phpbb\request\request					$request	Request object
 	* @param \phpbb\template\template				$template	Template object
 	* @param \phpbb\user							$user		User object
+	* @param array									$settings	Settings with key, title, explain language key, minimum and maximum config variable key
 	* @return \elsensee\postsperpage\event\listener
 	* @access public
 	*/
-	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\db\driver\driver_interface $db, \phpbb\request\request $request, \phpbb\template\template $template, \phpbb\user $user)
+	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\db\driver\driver_interface $db, \phpbb\request\request $request, \phpbb\template\template $template, \phpbb\user $user, $settings)
 	{
 		$this->config = $config;
-		$this->config_changed = false;
 		$this->db = $db;
 		$this->error = array();
 		$this->helper = $helper;
+		$this->settings = $settings;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
@@ -96,30 +97,48 @@ class listener implements EventSubscriberInterface
 	*/
 	public function add_config_to_acp_users($event)
 	{
-		$this->validate_config();
-
-		if (!$this->config['ppp_maximum_ppp'] && !$this->config['ppp_maximum_tpp'])
+		if (!$this->validate_event_call())
 		{
 			return;
 		}
 
+		$this->user->add_lang('acp/board');
 		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
 
 		$data = $event['data'];
 		// If I already did this I don't have to do it again
-		if (!isset($data['posts_pp']) && !isset($data['topics_pp']))
+		$all_unset = true;
+		foreach ($this->settings as $setting)
+		{
+			if (is_array($setting) && isset($data[$setting['key']]))
+			{
+				$all_unset = false;
+				break;
+			}
+		}
+		if ($all_unset)
 		{
 			$this->validate_request_vars($data, $event['user_row'], false);
 		}
 
-		$event['user_prefs_data'] = array_merge($event['users_prefs_data'], array(
-			'POSTS_PP'			=> (isset($data['posts_pp'])) ? $data['posts_pp'] : 0,
-			'POSTS_PP_CONFIG'	=> $this->config['posts_per_page'],
-			'POSTS_PP_MAX'		=> $this->config['ppp_maximum_ppp'],
-			'TOPICS_PP'			=> (isset($data['topics_pp'])) ? $data['topics_pp'] : 0,
-			'TOPICS_PP_CONFIG'	=> $this->config['topics_per_page'],
-			'TOPICS_PP_MAX'		=> $this->config['ppp_maximum_tpp'],
-		));
+		foreach ($data as $key => $value)
+		{
+			if (!isset($this->settings[$key]) || !is_array($this->settings[$key]))
+			{
+				continue;
+			}
+			$setting = $this->settings[$key];
+
+			$this->template->assign_block_vars('ppp_setting', array(
+				'KEY'		=> $key,
+				'VALUE'		=> $value,
+				'TITLE'		=> $this->user->lang($setting['title']),
+				'EXPLAIN'	=> $this->user->lang($setting['explain'], $this->config[$setting['normal_config']]),
+				'MIN'		=> $setting['min'],
+				'MAX'		=> max($this->config[$setting['max']], $this->config[$setting['normal_config']]),
+				'MAX_LENGTH' => strlen(max($this->config[$setting['max']], $this->config[$setting['normal_config']])),
+			));
+		}
 	}
 
 	/**
@@ -131,13 +150,12 @@ class listener implements EventSubscriberInterface
 	*/
 	public function add_config_to_ucp($event)
 	{
-		$this->validate_config();
-
-		if (!$this->config['ppp_maximum_ppp'] && !$this->config['ppp_maximum_tpp'])
+		if (!$this->validate_event_call())
 		{
 			return;
 		}
 
+		$this->user->add_lang('acp/board');
 		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
 
 		$data = array();
@@ -179,14 +197,26 @@ class listener implements EventSubscriberInterface
 			$this->error = array_map(array($this->user, 'lang'), $this->error);
 		}
 
-		$this->template->assign_vars(array(
-			'POSTS_PP'			=> (isset($data['posts_pp'])) ? $data['posts_pp'] : 0,
-			'POSTS_PP_CONFIG'	=> $this->config['posts_per_page'],
-			'POSTS_PP_MAX'		=> $this->config['ppp_maximum_ppp'],
-			'TOPICS_PP'			=> (isset($data['topics_pp'])) ? $data['topics_pp'] : 0,
-			'TOPICS_PP_CONFIG'	=> $this->config['topics_per_page'],
-			'TOPICS_PP_MAX'		=> $this->config['ppp_maximum_tpp'],
-		));
+		foreach ($data as $key => $value)
+		{
+			if (!is_array($this->settings[$key]))
+			{
+				continue;
+			}
+
+			$setting = $this->settings[$key];
+
+			$this->template->assign_block_vars('ppp_setting', array(
+				'KEY'		=> $key,
+				'VALUE'		=> $value,
+				'TITLE'		=> $this->user->lang($setting['title']),
+				'EXPLAIN'	=> $this->user->lang($setting['explain'], $this->config[$setting['normal_config']]),
+				'MIN'		=> $setting['min'],
+				'MAX'		=> max($this->config[$setting['max']], $this->config[$setting['normal_config']]),
+				'MAX_LENGTH' => strlen(max($this->config[$setting['max']], $this->config[$setting['normal_config']])),
+			));
+		}
+
 		$event['data'] = array_merge($event['data'], $data);
 	}
 
@@ -208,16 +238,20 @@ class listener implements EventSubscriberInterface
 		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
 
 		$vars = $event['display_vars'];
-		// Set explain to true to.. explain something with our own words.. literally!
-		$vars['vars']['topics_per_page']['explain'] = true;
-		$vars['vars']['posts_per_page']['explain'] = true;
 
-		$own_vars = array(
-			'ppp_maximum_tpp'	=> array('lang' => 'PPP_TOPICS_PER_PAGE_MAXIMUM',	'validate' => 'int:0:9999',	'type' => 'number:0:9999',	'explain' => true),
-			'ppp_maximum_ppp'	=> array('lang' => 'PPP_POSTS_PER_PAGE_MAXIMUM',	'validate' => 'int:0:9999',	'type' => 'number:0:9999',	'explain' => true),
-		);
+		$own_vars = array();
+		foreach ($this->settings as $setting)
+		{
+			if (!is_array($setting))
+			{
+				continue;
+			}
+
+			$own_vars[$setting['max']] = array('lang' => $setting['max_lang'],	'validate' => 'int:' . $setting['min_acp'] . ':' . $setting['max_acp'],	'type' => 'number:' . $setting['min_acp'] . ':' . $setting['max_acp'],	'explain' => true);
+		}
+
 		// Insert our own_vars array right after posts_per_page to let them appear right there.
-		$vars['vars'] = array_insert($vars['vars'], array_search('posts_per_page', array_keys($vars['vars'])), $own_vars);
+		$vars['vars'] = $this->array_insert($vars['vars'], array_search($this->settings['acp_position'], array_keys($vars['vars'])) + 1, $own_vars);
 
 		// That's it. We're done.
 		$event['display_vars'] = $vars;
@@ -249,84 +283,26 @@ class listener implements EventSubscriberInterface
 	*/
 	public function modify_per_page_config($event)
 	{
+		$current_url = $this->helper->get_current_url();
 		// We may not modify it here - we would get unexpected results. (At least that's what I expect)
-		if (defined('ADMIN_START') || stripos($this->helper->get_current_url(), 'ucp.php') !== false || $this->config_changed)
+		if (defined('ADMIN_START') || stripos($current_url, 'ucp.php') !== false)
 		{
 			return;
 		}
 
 		// Remember: We overwrite these config values temporarily
-		if ($this->config['ppp_maximum_tpp'] && $this->user->data['user_topics_per_page'])
+		foreach ($this->settings as $setting)
 		{
-			$this->config['topics_per_page'] = $this->user->data['user_topics_per_page'];
-			$this->config_changed = true;
-		}
-		if ($this->config['ppp_maximum_ppp'] && $this->user->data['user_posts_per_page'])
-		{
-			$this->config['posts_per_page'] = $this->user->data['user_posts_per_page'];
-			$this->config_changed = true;
-		}
-	}
+			if (!is_array($setting))
+			{
+				continue;
+			}
 
-	/**
-	* Updates users config when in UCP
-	*
-	* @param object	$event The event object
-	* @return null
-	* @access public
-	*/
-	public function update_config_in_ucp($event)
-	{
-		$data = $event['data'];
-
-		$sql_ary = array();
-		if (isset($data['posts_pp']))
-		{
-			$sql_ary['user_posts_per_page'] = $data['posts_pp'];
+			if ($this->config[$setting['max']] && $this->user->data[$setting['user_config']])
+			{
+				$this->config[$setting['normal_config']] = $this->user->data[$setting['user_config']];
+			}
 		}
-		if (isset($data['topics_pp']))
-		{
-			$sql_ary['user_topics_per_page'] = $data['topics_pp'];
-		}
-		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
-	}
-
-	/**
-	* Updates users config when in ACP users
-	*
-	* @param object	$event The event object
-	* @return null
-	* @access public
-	*/
-	public function update_config_in_acp_users($event)
-	{
-		$this->validate_config();
-
-		if (!$this->config['ppp_maximum_ppp'] && !$this->config['ppp_maximum_tpp'])
-		{
-			return;
-		}
-
-		$data = array();
-		$error = $this->validate_request_vars($data, $event['user_row'], true);
-		if (sizeof($error))
-		{
-			$event['data'] = array_merge($event['data'], $data); // Telling myself that I already did this...
-			$event['error'] = array_merge($event['error'], $error);
-			return;
-		}
-
-		$sql_ary = array();
-		if (isset($data['posts_pp']))
-		{
-			$sql_ary['user_posts_per_page'] = $data['posts_pp'];
-		}
-		if (isset($data['topics_pp']))
-		{
-			$sql_ary['user_topics_per_page'] = $data['topics_pp'];
-		}
-
-		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
 	}
 
 	/**
@@ -347,29 +323,79 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	* Validates the config object so no wrong values are in there
+	* Updates users config when in UCP
 	*
+	* @param object	$event The event object
 	* @return null
+	* @access public
+	*/
+	public function update_config_in_ucp($event)
+	{
+		$data = $event['data'];
+
+		$sql_ary = array();
+		foreach ($this->settings as $setting)
+		{
+			if (is_array($setting) && isset($data[$setting['key']]))
+			{
+				$sql_ary[$setting['user_config']] = $data[$setting['key']];
+			}
+		}
+		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
+	}
+
+	/**
+	* Updates users config when in ACP users
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function update_config_in_acp_users($event)
+	{
+		if (!$this->validate_event_call())
+		{
+			return;
+		}
+
+		$data = array();
+		$error = $this->validate_request_vars($data, $event['user_row'], true);
+		if (sizeof($error))
+		{
+			$event['data'] = array_merge($event['data'], $data); // Telling myself that I already did this...
+			$event['error'] = array_merge($event['error'], $error);
+			return;
+		}
+
+		$sql_ary = array();
+		foreach ($this->settings as $setting)
+		{
+			if (is_array($setting) && isset($data[$setting['key']]))
+			{
+				$sql_ary[$setting['user_config']] = $data[$setting['key']];
+			}
+		}
+
+		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
+	}
+
+	/**
+	* Validates if the event call is okay because there is indeed work to do
+	* Just checks if at least one config var is not set to 0
+	*
+	* @return bool
 	* @access protected
 	*/
-	protected function validate_config()
+	protected function validate_event_call()
 	{
-		// A somehow unexpected case!
-		if ($this->config_changed)
+		foreach ($this->settings as $setting)
 		{
-			$sql = 'SELECT config_name, config_value
-				FROM ' . CONFIG_TABLE . '
-				WHERE ' $this->db->sql_in_set('config_name', array('posts_per_page', 'topics_per_page'));
-			$result = $this->db->sql_query($sql, 60);
-
-			while ($row = $this->db->sql_fetchrow($result))
+			if (is_array($setting) && $this->config[$setting['max']])
 			{
-				$this->config[$row['config_name']] = (int) $row['config_value'];
+				return true;
 			}
-			$this->db->sql_freeresult($result);
-
-			$this->config_changed = false;
 		}
+		return false;
 	}
 
 	/**
@@ -385,18 +411,16 @@ class listener implements EventSubscriberInterface
 	{
 		$validate_array = array();
 
-		if ($this->config['ppp_maximum_ppp'])
+		foreach ($this->settings as $setting)
 		{
-			$data['posts_pp'] = $this->request->variable('posts_pp', (int) $user_row['user_posts_per_page']);
-			$validate_array['posts_pp'] = array('num', false, 0, max($this->config['ppp_maximum_ppp'], $this->config['posts_per_page']));
-		}
-		if ($this->config['ppp_maximum_tpp'])
-		{
-			$data['topics_pp'] = $this->request->variable('topics_pp', (int) $user_row['user_topics_per_page']);
-			$validate_array['topics_pp'] = array('num', false, 0, max($this->config['ppp_maximum_tpp'], $this->config['topics_per_page']));
+			if (is_array($setting) && $this->config[$setting['max']])
+			{
+				$data[$setting['key']] = $this->request->variable($setting['key'], (int) $user_row[$setting['user_config']]);
+				$validate_array[$setting['key']] = array('num', false, $setting['min'], max($this->config[$setting['max']], $this->config[$setting['normal_config']]));
+			}
 		}
 
-		if ($validate)
+		if ($validate && sizeof($validate_array))
 		{
 			return validate_data($data, $validate_array);
 		}
