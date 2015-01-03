@@ -47,8 +47,8 @@ $lang = array_merge($lang, array(
 	'PPP_EXPLAIN'	=> 'Set to 0 to use the default setting. (currently: %d)',
 
 	// Validation errors
-	'TOO_LARGE_POSTS_PP'	=> 'The value of <strong>Posts per page</strong> setting you entered is too large.',
-	'TOO_LARGE_TOPICS_PP'	=> 'The value of <strong>Topics per page</strong> setting you entered is too large.',
-	'TOO_SMALL_POSTS_PP'	=> 'The value of <strong>Posts per page</strong> setting you entered is too small.',
-	'TOO_SMALL_TOPICS_PP'	=> 'The value of <strong>Topics per page</strong> setting you entered is too small.',
+	'TOO_LARGE_POSTS_PP'	=> 'The number of <strong>Posts per page</strong> you entered is too large.',
+	'TOO_LARGE_TOPICS_PP'	=> 'The number of <strong>Topics per page</strong> you entered is too large.',
+	'TOO_SMALL_POSTS_PP'	=> 'The number of <strong>Posts per page</strong> you entered is too small.',
+	'TOO_SMALL_TOPICS_PP'	=> 'The number of <strong>Topics per page</strong> you entered is too small.',
 ));
