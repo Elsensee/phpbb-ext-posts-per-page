@@ -358,6 +358,8 @@ class listener implements EventSubscriberInterface
 			return;
 		}
 
+		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
+
 		$data = array();
 		$error = $this->validate_request_vars($data, $event['user_row'], true);
 		if (sizeof($error))
