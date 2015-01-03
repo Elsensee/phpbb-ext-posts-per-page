@@ -38,10 +38,10 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
 	// Displayed in ACP -> Post settings
-	'PPP_POSTS_PER_PAGE_MAXIMUM'			=> 'Posts per page maximum',
-	'PPP_POSTS_PER_PAGE_MAXIMUM_EXPLAIN'	=> 'Sets the maximum which users are allowed to set. However the maximum will be the value of posts per page if this value is smaller. Set to 0 to disable this setting for users.',
-	'PPP_TOPICS_PER_PAGE_MAXIMUM'			=> 'Topics per page maximum',
-	'PPP_TOPICS_PER_PAGE_MAXIMUM_EXPLAIN'	=> 'Sets the maximum which users are allowed to set. However the maximum will be the value of topics per page if this value is smaller. Set to 0 to disable this setting for users.',
+	'PPP_POSTS_PER_PAGE_MAXIMUM'			=> 'Maximum number of posts per page',
+	'PPP_POSTS_PER_PAGE_MAXIMUM_EXPLAIN'	=> 'Sets the maximum number of posts per page which users are allowed to set. The minimum allowed value will be the default number of posts per page set in the board settings. If this value is smaller, it will be ignored. The only exception is 0, in which case the user is disallowed to specify the number of posts per page.',
+	'PPP_TOPICS_PER_PAGE_MAXIMUM'			=> 'Maximum number of topics per page',
+	'PPP_TOPICS_PER_PAGE_MAXIMUM_EXPLAIN'	=> 'Sets the maximum number of topics which users are allowed to set. The minimum allowed value will be the default number of topics per page set in the board settings. If this value is smaller, it will be ignored. The only exception is 0, in which case the user is disallowed to specify the number of topics per page.',
 
 	// Displayed in UCP and ACP -> Manage users
 	'PPP_EXPLAIN'	=> 'Set to 0 to use the default setting. (currently: %d)',
