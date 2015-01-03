@@ -11,8 +11,8 @@ parameters:
             max_lang: PPP_TOPICS_PER_PAGE_MAXIMUM
             normal_config: topics_per_page
             user_config: user_topics_per_page
-        post_pp:
-            key: post_pp
+        posts_pp:
+            key: posts_pp
             title: POSTS_PER_PAGE
             explain: PPP_EXPLAIN
             min: 0
