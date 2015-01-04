@@ -20,7 +20,7 @@ This is the repository for the development of the Individual posts per page Exte
 
 ## Support
 
-* Report bugs and other issues to the [Issue Tracker](https://github.com/elsensee/postsperpage/issues).
+* Report bugs and other issues to the [Issue Tracker](https://github.com/Elsensee/phpbb-ext-posts-per-page/issues).
 
 ## License
 [GNU General Public License v2](http://opensource.org/licenses/GPL-2.0)
