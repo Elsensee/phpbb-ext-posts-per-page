@@ -1,0 +1,56 @@
+parameters:
+    elsensee.postsperpage.settings:
+        topics_pp:
+            # Okay! Listen to me: I will explain these only once!
+            # key is mostly like the key defining this array. Just important for validation error language strings
+            key: topics_pp
+            # title is the language string which will be displayed to users (or in acp_users)
+            title: TOPICS_PER_PAGE
+            # explain is the language string explaining more things to users (not to admins except in acp_users)
+            explain: PPP_EXPLAIN
+            # min is just the smallest possible number for users (although this means: use standard)
+            min: 0
+            # max is the config name of the config storing the max value set by the admin
+            max: ppp_maximum_tpp
+            # min_acp is the smallest possible number for defining the maximum in ACP (although this means disable)
+            min_acp: 0
+            # max_acp is the biggest possible number for defining the maximum in ACP
+            max_acp: 9999
+            # max_lang is the language string displayed to admins when defining the maximum
+            max_lang: PPP_TOPICS_PER_PAGE_MAXIMUM
+            # data_row_config is the name of the column of the user setting
+            data_row_config: user_topics_per_page
+            # normal_config is the config name which will be used normally
+            normal_config: topics_per_page
+            # auth (doesn't exist at this place) is an array of authentications that the user must be granted in order to set this setting
+            # pages is an array of pages on which this setting will be somehow active
+            pages: [acp_board, acp_users, ucp_prefs]
+        posts_pp:
+            key: posts_pp
+            title: POSTS_PER_PAGE
+            # Think about this:
+            explain: PPP_EXPLAIN
+            min: 0
+            max: ppp_maximum_ppp
+            min_acp: 0
+            max_acp: 9999
+            max_lang: PPP_POSTS_PER_PAGE_MAXIMUM
+            data_row_config: user_posts_per_page
+            normal_config: posts_per_page
+            pages: [acp_board, acp_users, ucp_prefs]
+        topic_posts_pp:
+            key: topic_posts_pp
+            title: POSTS_PER_PAGE
+            # Think about this:
+            explain: PPP_EXPLAIN
+            min: 0
+            max: ppp_maximum_topic_ppp
+            min_acp: 0
+            max_acp: 9999
+            max_lang: PPP_TOPIC_POSTS_PER_PAGE_MAXIMUM
+            data_row_config: topic_posts_per_page
+            normal_config: posts_per_page
+            auth: [u_topic_ppp]
+            pages: [acp_board, posting, viewforum, viewtopic]
+
+    elsensee.postsperpage.acp_position: posts_per_page

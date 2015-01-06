@@ -1,39 +1,18 @@
-parameters:
-    elsensee.postsperpage.settings:
-        topics_pp:
-            key: topics_pp
-            title: TOPICS_PER_PAGE
-            explain: PPP_EXPLAIN
-            min: 0
-            max: ppp_maximum_tpp
-            min_acp: 0
-            max_acp: 9999
-            max_lang: PPP_TOPICS_PER_PAGE_MAXIMUM
-            normal_config: topics_per_page
-            user_config: user_topics_per_page
-        posts_pp:
-            key: posts_pp
-            title: POSTS_PER_PAGE
-            explain: PPP_EXPLAIN
-            min: 0
-            max: ppp_maximum_ppp
-            min_acp: 0
-            max_acp: 9999
-            max_lang: PPP_POSTS_PER_PAGE_MAXIMUM
-            normal_config: posts_per_page
-            user_config: user_posts_per_page
-        acp_position: posts_per_page
+imports:
+    - { resource: parameters.yml }
 
 services:
     elsensee.postsperpage.listener:
         class: elsensee\postsperpage\event\listener
         arguments:
+            - @auth
             - @config
-            - @controller.helper
             - @dbal.conn
+            - @controller.helper
             - @request
             - @template
             - @user
+            - %elsensee.postsperpage.acp_position%
             - %elsensee.postsperpage.settings%
         tags:
             - { name: event.listener }
