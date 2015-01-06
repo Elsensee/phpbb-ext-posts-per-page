@@ -7,7 +7,7 @@ parameters:
             # title is the language string which will be displayed to users (or in acp_users)
             title: TOPICS_PER_PAGE
             # explain is the language string explaining more things to users (not to admins except in acp_users)
-            explain: PPP_EXPLAIN
+            explain: PPP_TOPICS_PER_PAGE_EXPLAIN
             # min is just the smallest possible number for users (although this means: use standard)
             min: 0
             # max is the config name of the config storing the max value set by the admin
@@ -28,8 +28,7 @@ parameters:
         posts_pp:
             key: posts_pp
             title: POSTS_PER_PAGE
-            # Think about this:
-            explain: PPP_EXPLAIN
+            explain: PPP_POSTS_PER_PAGE_EXPLAIN
             min: 0
             max: ppp_maximum_ppp
             min_acp: 0
@@ -41,8 +40,7 @@ parameters:
         topic_posts_pp:
             key: topic_posts_pp
             title: POSTS_PER_PAGE
-            # Think about this:
-            explain: PPP_EXPLAIN
+            explain: PPP_TOPIC_POSTS_PER_PAGE_EXPLAIN
             min: 0
             max: ppp_maximum_topic_ppp
             min_acp: 0
