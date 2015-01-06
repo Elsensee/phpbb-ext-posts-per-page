@@ -124,6 +124,45 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
+	* Add configuration items for ppp-extension to ACP
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function add_configuration($event)
+	{
+		$page = 'acp_board';
+		if ($event['mode'] != 'post')
+		{
+			// Sorry, didn't want to interrupt you
+			return;
+		}
+
+		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
+
+		$vars = $event['display_vars'];
+
+		$own_vars = array();
+		foreach ($this->settings as $setting)
+		{
+			if (!in_array($page, $setting['pages']))
+			{
+				continue;
+			}
+
+			$min_max = $setting['min_acp'] . ':' . $setting['max_acp'];
+			$own_vars[$setting['max']] = array('lang' => $setting['max_lang'],	'validate' => 'int:' . $min_max,	'type' => 'number:' . $min_max,	'explain' => true);
+		}
+
+		// Insert our own_vars array right after posts_per_page to let them appear right there.
+		$vars['vars'] = $this->array_insert($vars['vars'], array_search($this->acp_position, array_keys($vars['vars'])) + 1, $own_vars);
+
+		// That's it. We're done.
+		$event['display_vars'] = $vars;
+	}
+
+	/**
 	* Add configuration items for ppp-extension to ACP users
 	*
 	* @param object	$event The event object
@@ -176,6 +215,58 @@ class listener implements EventSubscriberInterface
 				'MAX_LENGTH' => strlen(max($this->config[$setting['max']], $this->config[$setting['normal_config']])),
 			));
 		}
+	}
+
+	/**
+	* Updates users config when in ACP users
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function update_config_in_acp_users($event)
+	{
+		$page = 'acp_users';
+		if (!$this->validate_event_call($page))
+		{
+			return;
+		}
+
+		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
+
+		$data = array();
+		$error = $this->validate_request_vars($data, $event['user_row'], $page, true);
+		if (sizeof($error))
+		{
+			$event['data'] = array_merge($event['data'], $data); // Telling myself that I already did this...
+			$event['error'] = array_merge($event['error'], $error);
+			return;
+		}
+
+		$sql_ary = array();
+		foreach ($this->settings as $setting)
+		{
+			if (in_array($page, $setting['pages']) && isset($data[$setting['key']]))
+			{
+				$sql_ary[$setting['data_row_config']] = $data[$setting['key']];
+			}
+		}
+
+		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
+	}
+
+	/**
+	* Add permissions for setting topic based posts per page settings.
+	*
+	* @param object $event The event object
+	* @return null
+	* @access public
+	*/
+	public function add_permissions($event)
+	{
+		$event['permissions'] = array_merge($event['permissions'], array(
+			'u_topic_ppp'	=> array('lang' => 'ACL_U_TOPIC_PPP', 'cat' => 'post'),
+		));
 	}
 
 	/**
@@ -232,6 +323,142 @@ class listener implements EventSubscriberInterface
 				'MAX_LENGTH' => strlen(max($this->config[$setting['max']], $this->config[$setting['normal_config']])),
 			));
 		}
+	}
+
+	/**
+	* Check for errors before posting
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function check_errors_before_posting($event)
+	{
+		$page = 'posting';
+		$mode = $event['mode'];
+		if (!$this->validate_event_call($page, true, $event['forum_id']) || !in_array($mode, array('post', 'edit')))
+		{
+			return;
+		}
+		if ($mode == 'edit' && $event['post_id'] != $event['post_data']['topic_first_post_id'])
+		{
+			// We only allow setting this if we are editing first post or posting a new topic
+			return;
+		}
+
+		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
+
+		$data = array();
+		$error = $this->validate_request_vars($data, $event['post_data'], $page, ($mode == 'edit' || $event['preview'] || $event['submit']));
+		if (sizeof($error))
+		{
+			$event['error'] = array_merge($event['error'], array_map(array($this->user, 'lang'), $error));
+		}
+
+		// Merge data with post data so we don't have to do the validation thing again...
+		$event['post_data'] = array_merge($event['post_data'], $data);
+	}
+
+	/**
+	* Modifies the data object sent to submit_post before.. doing that..
+	* (Well it just copies our data from post_data to data)
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function modify_config_before_posting($event)
+	{
+		$page = 'posting';
+		$mode = $event['mode'];
+		if (!$this->validate_event_call($page, true, $event['forum_id']) || !in_array($mode, array('post', 'edit')))
+		{
+			return;
+		}
+		if ($mode == 'edit' && $event['post_id'] != $event['post_data']['topic_first_post_id'])
+		{
+			// We only allow setting this if we are editing first post or posting a new topic
+			return;
+		}
+		$post_data = $event['post_data'];
+		$all_unset = true;
+		foreach ($this->settings as $setting)
+		{
+			if (in_array($page, $setting['pages']) && array_search($setting['key'], $post_data))
+			{
+				$all_unset = false;
+				break;
+			}
+		}
+		if ($all_unset)
+		{
+			return;
+		}
+
+		$data = array();
+		foreach ($post_data as $key => $value)
+		{
+			if (isset($this->settings[$key]) && in_array($page, $this->settings[$key]['pages']))
+			{
+				$data[$key] = $value;
+			}
+		}
+		$event['data'] = array_merge($event['data'], $data);
+	}
+
+	/**
+	* Handles the config if given to submit_post.. I hate that function
+	*
+	* @param object	$event The event object
+	* @return null
+	* @access public
+	*/
+	public function handle_config_after_posting($event)
+	{
+		$page = 'posting';
+		$mode = $event['mode'];
+		$data = $event['data'];
+		if (!$this->validate_event_call($page, true, $data['forum_id']) || !in_array($mode, array('post', 'edit')))
+		{
+			return;
+		}
+		if ($mode == 'edit' && $data['topic_first_post_id'] != $data['post_id'])
+		{
+			return;
+		}
+		$all_unset = true;
+		foreach ($this->settings as $setting)
+		{
+			if (in_array($page, $setting['pages']) && array_search($setting['key'], $data))
+			{
+				$all_unset = false;
+				break;
+			}
+		}
+		if ($all_unset)
+		{
+			return;
+		}
+
+		$sql_ary = array();
+		foreach ($this->settings as $setting)
+		{
+			if (!isset($data[$setting['key']]) || !in_array($page, $setting['pages']))
+			{
+				continue;
+			}
+
+			$sql_ary[$setting['data_row_config']] = $data[$setting['key']];
+		}
+		if (empty($sql_ary))
+		{
+			return;
+		}
+
+		$sql = 'UPDATE ' . TOPICS_TABLE . '
+			SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . '
+			WHERE topic_id = ' . (int) $data['topic_id'];
+		$this->db->sql_query($sql);
 	}
 
 	/**
@@ -314,209 +541,43 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	* Add configuration items for ppp-extension to ACP
+	* Modifies template data if errors occured (in UCP)
 	*
 	* @param object	$event The event object
 	* @return null
 	* @access public
 	*/
-	public function add_configuration($event)
+	public function modify_ucp_pref_before_load($event)
 	{
-		$page = 'acp_board';
-		if ($event['mode'] != 'post')
+		if ($event['mode'] != 'view' || !sizeof($this->error))
 		{
-			// Sorry, didn't want to interrupt you
 			return;
 		}
 
-		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
-
-		$vars = $event['display_vars'];
-
-		$own_vars = array();
-		foreach ($this->settings as $setting)
-		{
-			if (!in_array($page, $setting['pages']))
-			{
-				continue;
-			}
-
-			$min_max = $setting['min_acp'] . ':' . $setting['max_acp'];
-			$own_vars[$setting['max']] = array('lang' => $setting['max_lang'],	'validate' => 'int:' . $min_max,	'type' => 'number:' . $min_max,	'explain' => true);
-		}
-
-		// Insert our own_vars array right after posts_per_page to let them appear right there.
-		$vars['vars'] = $this->array_insert($vars['vars'], array_search($this->acp_position, array_keys($vars['vars'])) + 1, $own_vars);
-
-		// That's it. We're done.
-		$event['display_vars'] = $vars;
+		$this->template->assign_var('ERROR', implode('<br />', $this->error));
 	}
 
 	/**
-	* Add permissions for setting topic based posts per page settings.
-	*
-	* @param object $event The event object
-	* @return null
-	* @access public
-	*/
-	public function add_permissions($event)
-	{
-		$event['permissions'] = array_merge($event['permissions'], array(
-			'u_topic_ppp'	=> array('lang' => 'ACL_U_TOPIC_PPP', 'cat' => 'post'),
-		));
-	}
-
-	/**
-	* Inserts an array into an array at a specified offset and keeps the keys.
-	* (array_splice wouldn't allow keeping the keys)
-	* See: http://php.net/manual/en/function.array-splice.php#56794
-	*
-	* @param array	$input			The input array.
-	* @param int	$offset			Specifies the offset at which the array should be inserted at.
-	* @param array	$insert_array	The array which should be inserted.
-	* @return array
-	* @access protected
-	*/
-	protected function array_insert($input, $offset, $insertion)
-	{
-		$first_array = array_splice($input, 0, $offset);
-		return array_merge($first_array, $insertion, $input);
-	}
-
-	/**
-	* Check for errors before posting
+	* Updates users config when in UCP
 	*
 	* @param object	$event The event object
 	* @return null
 	* @access public
 	*/
-	public function check_errors_before_posting($event)
+	public function update_config_in_ucp($event)
 	{
-		$page = 'posting';
-		$mode = $event['mode'];
-		if (!$this->validate_event_call($page, true, $event['forum_id']) || !in_array($mode, array('post', 'edit')))
-		{
-			return;
-		}
-		if ($mode == 'edit' && $event['post_id'] != $event['post_data']['topic_first_post_id'])
-		{
-			// We only allow setting this if we are editing first post or posting a new topic
-			return;
-		}
-
-		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
-
-		$data = array();
-		$error = $this->validate_request_vars($data, $event['post_data'], $page, ($mode == 'edit' || $event['preview'] || $event['submit']));
-		if (sizeof($error))
-		{
-			$event['error'] = array_merge($event['error'], array_map(array($this->user, 'lang'), $error));
-		}
-
-		// Merge data with post data so we don't have to do the validation thing again...
-		$event['post_data'] = array_merge($event['post_data'], $data);
-	}
-
-	/**
-	* Handles the config if given to submit_post.. I hate that function
-	*
-	* @param object	$event The event object
-	* @return null
-	* @access public
-	*/
-	public function handle_config_after_posting($event)
-	{
-		$page = 'posting';
-		$mode = $event['mode'];
+		$page = 'ucp_prefs';
 		$data = $event['data'];
-		if (!$this->validate_event_call($page, true, $data['forum_id']) || !in_array($mode, array('post', 'edit')))
-		{
-			return;
-		}
-		if ($mode == 'edit' && $data['topic_first_post_id'] != $data['post_id'])
-		{
-			return;
-		}
-		$all_unset = true;
-		foreach ($this->settings as $setting)
-		{
-			if (in_array($page, $setting['pages']) && array_search($setting['key'], $data))
-			{
-				$all_unset = false;
-				break;
-			}
-		}
-		if ($all_unset)
-		{
-			return;
-		}
 
 		$sql_ary = array();
 		foreach ($this->settings as $setting)
 		{
-			if (!isset($data[$setting['key']]) || !in_array($page, $setting['pages']))
+			if (in_array($page, $setting['pages']) && isset($data[$setting['key']]))
 			{
-				continue;
-			}
-
-			$sql_ary[$setting['data_row_config']] = $data[$setting['key']];
-		}
-		if (empty($sql_ary))
-		{
-			return;
-		}
-
-		$sql = 'UPDATE ' . TOPICS_TABLE . '
-			SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . '
-			WHERE topic_id = ' . (int) $data['topic_id'];
-		$this->db->sql_query($sql);
-	}
-
-	/**
-	* Modifies the data object sent to submit_post before.. doing that..
-	* (Well it just copies our data from post_data to data)
-	*
-	* @param object	$event The event object
-	* @return null
-	* @access public
-	*/
-	public function modify_config_before_posting($event)
-	{
-		$page = 'posting';
-		$mode = $event['mode'];
-		if (!$this->validate_event_call($page, true, $event['forum_id']) || !in_array($mode, array('post', 'edit')))
-		{
-			return;
-		}
-		if ($mode == 'edit' && $event['post_id'] != $event['post_data']['topic_first_post_id'])
-		{
-			// We only allow setting this if we are editing first post or posting a new topic
-			return;
-		}
-		$post_data = $event['post_data'];
-		$all_unset = true;
-		foreach ($this->settings as $setting)
-		{
-			if (in_array($page, $setting['pages']) && array_search($setting['key'], $post_data))
-			{
-				$all_unset = false;
-				break;
+				$sql_ary[$setting['data_row_config']] = $data[$setting['key']];
 			}
 		}
-		if ($all_unset)
-		{
-			return;
-		}
-
-		$data = array();
-		foreach ($post_data as $key => $value)
-		{
-			if (isset($this->settings[$key]) && in_array($page, $this->settings[$key]['pages']))
-			{
-				$data[$key] = $value;
-			}
-		}
-		$event['data'] = array_merge($event['data'], $data);
+		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
 	}
 
 	/**
@@ -641,82 +702,23 @@ class listener implements EventSubscriberInterface
 		}
 	}
 
-	/**
-	* Modifies template data if errors occured (in UCP)
-	*
-	* @param object	$event The event object
-	* @return null
-	* @access public
-	*/
-	public function modify_ucp_pref_before_load($event)
-	{
-		if ($event['mode'] != 'view' || !sizeof($this->error))
-		{
-			return;
-		}
-
-		$this->template->assign_var('ERROR', implode('<br />', $this->error));
-	}
+//// Helper functions because I am too lazy to setup a helper class just for three functions... Sorry...
 
 	/**
-	* Updates users config when in UCP
+	* Inserts an array into an array at a specified offset and keeps the keys.
+	* (array_splice wouldn't allow keeping the keys)
+	* See: http://php.net/manual/en/function.array-splice.php#56794
 	*
-	* @param object	$event The event object
-	* @return null
-	* @access public
+	* @param array	$input			The input array.
+	* @param int	$offset			Specifies the offset at which the array should be inserted at.
+	* @param array	$insert_array	The array which should be inserted.
+	* @return array
+	* @access protected
 	*/
-	public function update_config_in_ucp($event)
+	protected function array_insert($input, $offset, $insertion)
 	{
-		$page = 'ucp_prefs';
-		$data = $event['data'];
-
-		$sql_ary = array();
-		foreach ($this->settings as $setting)
-		{
-			if (in_array($page, $setting['pages']) && isset($data[$setting['key']]))
-			{
-				$sql_ary[$setting['data_row_config']] = $data[$setting['key']];
-			}
-		}
-		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
-	}
-
-	/**
-	* Updates users config when in ACP users
-	*
-	* @param object	$event The event object
-	* @return null
-	* @access public
-	*/
-	public function update_config_in_acp_users($event)
-	{
-		$page = 'acp_users';
-		if (!$this->validate_event_call($page))
-		{
-			return;
-		}
-
-		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
-
-		$data = array();
-		$error = $this->validate_request_vars($data, $event['user_row'], $page, true);
-		if (sizeof($error))
-		{
-			$event['data'] = array_merge($event['data'], $data); // Telling myself that I already did this...
-			$event['error'] = array_merge($event['error'], $error);
-			return;
-		}
-
-		$sql_ary = array();
-		foreach ($this->settings as $setting)
-		{
-			if (in_array($page, $setting['pages']) && isset($data[$setting['key']]))
-			{
-				$sql_ary[$setting['data_row_config']] = $data[$setting['key']];
-			}
-		}
-
-		$event['sql_ary'] = array_merge($event['sql_ary'], $sql_ary);
+		$first_array = array_splice($input, 0, $offset);
+		return array_merge($first_array, $insertion, $input);
 	}
 
 	/**
