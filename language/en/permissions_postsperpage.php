@@ -37,5 +37,5 @@ if (empty($lang) || !is_array($lang))
 //
 
 $lang = array_merge($lang, array(
-	'ACL_U_TOPIC_PPP'		=> 'Can set topic-specific posts per page settings<br /><em>Please note that this setting can only be set in the first post of a topic.</em>',
+	'ACL_U_TOPIC_PPP'		=> 'Can set topic specific posts per page settings<br /><em>Please note that this setting can only be set in the first post of a topic.</em>',
 ));
