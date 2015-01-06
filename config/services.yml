@@ -12,6 +12,8 @@ services:
             - @request
             - @template
             - @user
+            - %core.root_path%
+            - %core.php_ext%
             - %elsensee.postsperpage.acp_position%
             - %elsensee.postsperpage.settings%
         tags:

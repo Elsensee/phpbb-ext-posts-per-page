@@ -40,6 +40,12 @@ class listener implements EventSubscriberInterface
 	/** @var array */
 	protected $old_config;
 
+	/** @var string */
+	protected $php_ext;
+
+	/** @var string */
+	protected $phpbb_root_path;
+
 	/** @var \phpbb\request\request */
 	protected $request;
 
@@ -61,12 +67,14 @@ class listener implements EventSubscriberInterface
 	* @param \phpbb\request\request				$request		Request object
 	* @param \phpbb\template\template			$template		Template object
 	* @param \phpbb\user						$user			User object
+	* @param string								$phpbb_root_path	phpBB root path
+	* @param string								$php_ext		PHP file extension
 	* @param string								$acp_position	Position of settings in acp_board
 	* @param array								$settings		Settings with key, title, explain language key, minimum and maximum config variable key
 	* @return \elsensee\postsperpage\event\listener
 	* @access public
 	*/
-	public function __construct(\phpbb\auth\auth $auth, \phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\controller\helper $helper, \phpbb\request\request $request, \phpbb\template\template $template, \phpbb\user $user, $acp_position, $settings)
+	public function __construct(\phpbb\auth\auth $auth, \phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\controller\helper $helper, \phpbb\request\request $request, \phpbb\template\template $template, \phpbb\user $user, $phpbb_root_path, $php_ext, $acp_position, $settings)
 	{
 		$this->acp_position = $acp_position;
 		$this->auth = $auth;
@@ -75,8 +83,10 @@ class listener implements EventSubscriberInterface
 		$this->error = array();
 		$this->helper = $helper;
 		$this->old_config = array(); // Learning the difference between an array and an object implementing ArrayAccess...
-		$this->settings = $settings;
+		$this->php_ext = $php_ext;
 		$this->request = $request;
+		$this->phpbb_root_path = $phpbb_root_path;
+		$this->settings = $settings;
 		$this->template = $template;
 		$this->user = $user;
 	}
@@ -91,17 +101,23 @@ class listener implements EventSubscriberInterface
 	static public function getSubscribedEvents()
 	{
 		return array(
+			// acp_board
 			'core.acp_board_config_edit_add'		=> 'add_configuration',
+			// acp_users
 			'core.acp_users_prefs_modify_sql'		=> 'update_config_in_acp_users',
 			'core.acp_users_prefs_modify_template_data'	=> 'add_config_to_acp_users',
+			// permissions
 			'core.permissions'						=> 'add_permissions',
+			// posting
 			'core.posting_modify_template_vars'		=> 'add_config_to_posting',
 			'core.posting_modify_submission_errors'	=> 'check_errors_before_posting',
 			'core.posting_modify_submit_post_before' => 'modify_config_before_posting',
-			'core.submit_post_end'					=> 'handle_config_after_posting',
+			'core.submit_post_end'					=> 'handle_config_after_posting', // (functions_posting)
+			// ucp_prefs
 			'core.ucp_prefs_modify_common'			=> 'modify_ucp_pref_before_load',
 			'core.ucp_prefs_view_data'				=> 'add_config_to_ucp',
 			'core.ucp_prefs_view_update_data'		=> 'update_config_in_ucp',
+			// change config vars with following two events:
 			'core.user_setup'						=> 'modify_per_page_config',
 			'core.viewforum_modify_topicrow'		=> 'modify_per_page_config_viewforum',
 		);
@@ -742,7 +758,7 @@ class listener implements EventSubscriberInterface
 	{
 		if (!function_exists('validate_data'))
 		{
-			include($GLOBALS['phpbb_root_path'] . 'includes/functions_user.php');
+			include($this->phpbb_root_path . 'includes/functions_user.' . $this->php_ext);
 		}
 		$validate_array = array();
 
