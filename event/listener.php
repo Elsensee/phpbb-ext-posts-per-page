@@ -307,11 +307,15 @@ class listener implements EventSubscriberInterface
 
 		foreach ($post_data as $key => $value)
 		{
-			if (!isset($this->settings[$key]) || !in_array($page, $this->settings[$key]['pages']) || !$this->auth->acl_gets($this->settings[$key]['auth'], $event['forum_id']))
+			if (!isset($this->settings[$key]) || !in_array($page, $this->settings[$key]['pages']))
 			{
 				continue;
 			}
 			$setting = $this->settings[$key];
+			if (isset($setting['auth']) && $this->auth->acl_gets($setting['auth'], $event['forum_id']))
+			{
+				continue;
+			}
 
 			$this->template->assign_block_vars('ppp_setting', array(
 				'KEY'		=> $key,
