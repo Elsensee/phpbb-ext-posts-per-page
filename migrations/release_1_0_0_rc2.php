@@ -9,11 +9,11 @@
 
 namespace elsensee\postsperpage\migrations;
 
-class release_1_0_0_RC2 extends \phpbb\db\migration\migration
+class release_1_0_0_rc2 extends \phpbb\db\migration\migration
 {
 	static public function depends_on()
 	{
-		return array('\elsensee\postsperpage\migrations\release_1_0_0_RC1');
+		return array('\elsensee\postsperpage\migrations\release_1_0_0_rc1');
 	}
 
 	public function update_schema()
