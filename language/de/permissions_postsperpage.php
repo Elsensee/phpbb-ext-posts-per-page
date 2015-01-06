@@ -2,7 +2,7 @@
 /**
 *
 * @package Individual posts per page
-* @copyright (c) 2015 Oliver Schramm
+* @copyright (c) 2015 Martin Beckmann
 * @license http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
 *
 */
