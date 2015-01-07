@@ -133,6 +133,7 @@ class listener implements EventSubscriberInterface
 	public function add_configuration($event)
 	{
 		$page = 'acp_board';
+		// Don't need a validate_event_call() because it would check if max is set but we want to set max here so.. meh...
 		if ($event['mode'] != 'post')
 		{
 			// Sorry, didn't want to interrupt you
@@ -236,9 +237,9 @@ class listener implements EventSubscriberInterface
 
 		$data = array();
 		$error = $this->validate_request_vars($data, $event['user_row'], $page, true);
+		$event['data'] = array_merge($event['data'], $data); // Telling myself that I already did this...
 		if (sizeof($error))
 		{
-			$event['data'] = array_merge($event['data'], $data); // Telling myself that I already did this...
 			$event['error'] = array_merge($event['error'], $error);
 			return;
 		}
@@ -264,6 +265,7 @@ class listener implements EventSubscriberInterface
 	*/
 	public function add_permissions($event)
 	{
+		// I hope I don't need to explain why I don't call validate_event_call() here...
 		$event['permissions'] = array_merge($event['permissions'], array(
 			'u_topic_ppp'	=> array('lang' => 'ACL_U_TOPIC_PPP', 'cat' => 'post'),
 		));
@@ -295,11 +297,10 @@ class listener implements EventSubscriberInterface
 
 		$post_data = $event['post_data'];
 
-		$preview = $event['preview'];
-		$submit = $event['submit'];
-		// The following boolean expression is made with paper and a pen
-		// It looks beautiful!
-		if ((!$preview && !$submit) || (sizeof($event['error']) && ($preview || $submit)))
+		// The following boolean expression was first made with paper and a pen..
+		// Then bantu told me something about boolean algebra and that made it look like this. Thank you! :)
+		// And then I saw that I missed an variable and the condition was wrong and totally nonsense so it now looks like this:
+		if (!$event['preview'] && !$event['refresh'] && !$event['submit'])
 		{
 			// First is a reference, second is not (third and fourth also not by the way)
 			$this->validate_request_vars($post_data, $event['post_data'], $page, false);
@@ -312,8 +313,9 @@ class listener implements EventSubscriberInterface
 				continue;
 			}
 			$setting = $this->settings[$key];
-			if (isset($setting['auth']) && $this->auth->acl_gets($setting['auth'], $event['forum_id']))
+			if (isset($setting['auth']) && !$this->auth->acl_gets($setting['auth'], $event['forum_id']))
 			{
+				// If auth is set but we are not allowed just.. don't.. okay?
 				continue;
 			}
 
@@ -353,7 +355,7 @@ class listener implements EventSubscriberInterface
 		$this->user->add_lang_ext('elsensee/postsperpage', 'common');
 
 		$data = array();
-		$error = $this->validate_request_vars($data, $event['post_data'], $page, ($mode == 'edit' || $event['preview'] || $event['submit']));
+		$error = $this->validate_request_vars($data, $event['post_data'], $page, true);
 		if (sizeof($error))
 		{
 			$event['error'] = array_merge($event['error'], array_map(array($this->user, 'lang'), $error));
@@ -384,22 +386,10 @@ class listener implements EventSubscriberInterface
 			// We only allow setting this if we are editing first post or posting a new topic
 			return;
 		}
-		$post_data = $event['post_data'];
-		$all_unset = true;
-		foreach ($this->settings as $setting)
-		{
-			if (in_array($page, $setting['pages']) && array_search($setting['key'], $post_data))
-			{
-				$all_unset = false;
-				break;
-			}
-		}
-		if ($all_unset)
-		{
-			return;
-		}
 
+		$post_data = $event['post_data'];
 		$data = array();
+
 		foreach ($post_data as $key => $value)
 		{
 			if (isset($this->settings[$key]) && in_array($page, $this->settings[$key]['pages']))
@@ -430,19 +420,6 @@ class listener implements EventSubscriberInterface
 		{
 			return;
 		}
-		$all_unset = true;
-		foreach ($this->settings as $setting)
-		{
-			if (in_array($page, $setting['pages']) && array_search($setting['key'], $data))
-			{
-				$all_unset = false;
-				break;
-			}
-		}
-		if ($all_unset)
-		{
-			return;
-		}
 
 		$sql_ary = array();
 		foreach ($this->settings as $setting)
@@ -456,6 +433,7 @@ class listener implements EventSubscriberInterface
 		}
 		if (empty($sql_ary))
 		{
+			// It's not our job to do a job if we don't have job we could do so quit here..
 			return;
 		}
 
@@ -553,6 +531,7 @@ class listener implements EventSubscriberInterface
 	*/
 	public function modify_ucp_pref_before_load($event)
 	{
+		// No validate_event_call().. Already validated through $this->error
 		if ($event['mode'] != 'view' || !sizeof($this->error))
 		{
 			return;
@@ -570,6 +549,7 @@ class listener implements EventSubscriberInterface
 	*/
 	public function update_config_in_ucp($event)
 	{
+		// No validate_event_call() because already validated through $data and I don't do much here
 		$page = 'ucp_prefs';
 		$data = $event['data'];
 
