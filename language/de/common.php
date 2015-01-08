@@ -45,7 +45,7 @@ $lang = array_merge($lang, array(
 	'PPP_TOPICS_PER_PAGE_MAXIMUM'			=> 'Maximale Anzahl an Themen pro Seite',
 	'PPP_TOPICS_PER_PAGE_MAXIMUM_EXPLAIN'	=> 'Setzt die maximal erlaubte Anzahl an Themen pro Seite, die Nutzer einstellen können. Die Nutzer dürfen immer mindestens so viele Themen pro Seite einstellen, wie in der Board-Konfiguration als Standard definiert ist. Falls du hier weniger Themen pro Seite erlaubst, wird diese Einstellung daher ignoriert. Die einzige Ausnahme hiervon ist die Einstellung 0, was den Benutzern verbietet, die Anzahl an Themen pro Seite selbst anzupassen.',
 
-	// Displayed in UCP and ACP -> Manage users
+	// Displayed in posting.php, UCP and ACP -> Manage users
 	'PPP_POSTS_PER_PAGE_EXPLAIN'		=> 'Diese Einstellung kann von Benutzern mit der Berechtigung für themenspezifische Einstellungen in einigen Themen überschrieben werden. Stelle diesen Wert auf 0 ein, um die Standardeinstellung zu verwenden (derzeit %d).',
 	'PPP_TOPIC_POSTS_PER_PAGE_EXPLAIN'	=> 'Diese Einstellung überschreibt benutzerspezifische Einstellungen. Stelle diesen Wert auf 0 ein, um die Standardeinstellung zu verwenden (derzeit %d).',
 	'PPP_TOPICS_PER_PAGE_EXPLAIN'		=> 'Stelle diesen Wert auf 0 ein, um die Standardeinstellung zu verwenden (derzeit %d).',

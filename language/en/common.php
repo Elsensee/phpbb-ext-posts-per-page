@@ -45,8 +45,8 @@ $lang = array_merge($lang, array(
 	'PPP_TOPICS_PER_PAGE_MAXIMUM'			=> 'Maximum number of topics per page',
 	'PPP_TOPICS_PER_PAGE_MAXIMUM_EXPLAIN'	=> 'Sets the maximum number of topics which users are allowed to set. The minimum allowed value will be the default number of topics per page set in the board settings. If this value is smaller, it will be ignored. The only exception is 0, in which case the user is disallowed to specify the number of topics per page.',
 
-	// Displayed in postings.php, UCP and ACP -> Manage users
-	'PPP_POSTS_PER_PAGE_EXPLAIN'		=> 'This setting can be overwritten in some topics by users which are allowed to set topic-specific posts per page settings. Set this to 0 to use the default setting. (currently: $d)',
+	// Displayed in posting.php, UCP and ACP -> Manage users
+	'PPP_POSTS_PER_PAGE_EXPLAIN'		=> 'This setting can be overwritten in some topics by users which are allowed to set topic-specific posts per page settings. Set this to 0 to use the default setting. (currently: %d)',
 	'PPP_TOPIC_POSTS_PER_PAGE_EXPLAIN'	=> 'This setting overwrites the user specific settings. Set to 0 to use the default setting (currently: %d)',
 	'PPP_TOPICS_PER_PAGE_EXPLAIN'		=> 'Set to 0 to use the default setting. (currently: %d)',
 
