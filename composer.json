@@ -3,7 +3,7 @@
 	"type": "phpbb-extension",
 	"description": "An extension which allows users to set their own posts per page settings.",
 	"homepage": "https://github.com/Elsensee/phpbb-ext-posts-per-page",
-	"version": "1.0.0-RC1",
+	"version": "1.0.0-RC2",
 	"time": "2015-01-03",
 	"license": "GPL-2.0",
 	"authors": [
