@@ -16,6 +16,11 @@ class release_1_0_0_rc2 extends \phpbb\db\migration\migration
 		return array('\elsensee\postsperpage\migrations\release_1_0_0_rc1');
 	}
 
+	public function effectively_installed()
+	{
+		return isset($this->config['ppp_maximum_topic_ppp']);
+	}
+
 	public function update_schema()
 	{
 		return array(

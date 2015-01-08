@@ -11,6 +11,13 @@ namespace elsensee\postsperpage\migrations;
 
 class release_1_0_0_rc1 extends \phpbb\db\migration\migration
 {
+	public function effectively_installed()
+	{
+		// This should be implemented because I had to rename the class (from uppercase to lowercase)
+		// And checking for config should be enough because schema won't exist if config doesn't exist.
+		return isset($this->config['ppp_maximum_ppp']);
+	}
+
 	public function update_schema()
 	{
 		return array(
