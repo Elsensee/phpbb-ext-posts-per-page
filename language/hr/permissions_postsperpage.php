@@ -13,12 +13,12 @@
 */
 if (!defined('IN_PHPBB'))
 {
-exit;
+	exit;
 }
 
 if (empty($lang) || !is_array($lang))
 {
-$lang = array();
+	$lang = array();
 }
 
 // DEVELOPERS PLEASE NOTE
@@ -38,5 +38,5 @@ $lang = array();
 //
 
 $lang = array_merge($lang, array(
-'ACL_U_TOPIC_PPP'=>'Može postaviti broj prikaza postova po stranici teme<br /><em>Ova postavka može biti uređena samo u prvom postu teme.</em>',
+	'ACL_U_TOPIC_PPP'	=> 'Može postaviti broj prikaza postova po stranici teme<br /><em>Ova postavka može biti uređena samo u prvom postu teme.</em>',
 ));
