@@ -27,6 +27,11 @@
 		"display-name": "Individual posts per page",
 		"soft-require" : {
 			"phpbb/phpbb": ">=3.1.2,<3.2.*@dev"
+		},
+		"version-check": {
+			"host": "www.phpbb.com",
+			"directory": "/customise/db/extension/individual_posts_per_page",
+			"filename": "version_check"
 		}
 	}
 }
