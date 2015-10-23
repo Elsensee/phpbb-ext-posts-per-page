@@ -1,0 +1,6 @@
+.git/			export-ignore
+.gitattributes	export-ignore
+
+*.php	text
+*.html	text
+*.yml	text
