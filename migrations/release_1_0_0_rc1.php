@@ -24,7 +24,7 @@ class release_1_0_0_rc1 extends \phpbb\db\migration\migration
 			'add_columns'		=> array(
 				$this->table_prefix . 'users'	=> array(
 					'user_posts_per_page'	=> array('USINT', 0, 'after' => 'user_post_sortby_dir'),
-					'user_topics_per_page'	=> array('USINT', 0, 'after' => 'user_topics_sortby_dir'),
+					'user_topics_per_page'	=> array('USINT', 0, 'after' => 'user_topic_sortby_dir'),
 				),
 			),
 		);
