@@ -9,8 +9,8 @@
 	"authors": [
 		{
 			"name": "Oliver Schramm",
-			"email": "elsensee@phpbb.de",
-			"homepage": "https://github.com/Elsensee",
+			"email": "elsensee@phpbb.com",
+			"homepage": "https://www.oliver-schramm.eu",
 			"role": "Lead Developer"
 		},
 		{
@@ -20,7 +20,7 @@
 		}
 	],
 	"require": {
-		"php": ">=5.3.3",
+		"php": ">=5.4",
 		"composer/installers": "~1.0"
 	},
 	"extra": {
