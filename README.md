@@ -1,4 +1,4 @@
-# "Individual posts per page" extension for phpBB 3.1
+# "Individual posts per page" extension for phpBB 3.2+
 
 This is the repository for the development of the Individual posts per page Extension.
 
