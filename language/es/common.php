@@ -46,7 +46,7 @@ $lang = array_merge($lang, array(
 	'PPP_TOPICS_PER_PAGE_MAXIMUM_EXPLAIN'	=> 'Establece el número máximo de mensajes que se les permite a los usuarios configurar. El valor mínimo permitido será el número predeterminado de los temas por página establecido en los ajustes del foro. Si este valor es menor, será ignorado. La única excepción es 0, en cuyo caso el usuario no podrá especificar el número de temas por página.',
 
 	// Displayed in posting.php, UCP and ACP -> Manage users
-	'PPP_POSTS_PER_PAGE_EXPLAIN'		=> 'This setting can be overwritten in some topics by users which are allowed to set topic-specific posts per page settings. Se establece en 0 para utilizar la configuración por defecto. (actualmente: %d)',
+	'PPP_POSTS_PER_PAGE_EXPLAIN'		=> 'Esta configuración sobrescribe en algunos temas por los usuarios que están autorizados para establecer mensajes específicos de temas en la configuración de página. Se establece en 0 para utilizar la configuración por defecto. (actualmente: %d)',
 	'PPP_TOPIC_POSTS_PER_PAGE_EXPLAIN'	=> 'Esta configuración sobrescribe los ajustes específicos del usuario. Se establece en 0 para utilizar la configuración por defecto. (actualmente: %d)',
 	'PPP_TOPICS_PER_PAGE_EXPLAIN'		=> 'Se establece en 0 para utilizar la configuración por defecto. (actualmente: %d)',
 
