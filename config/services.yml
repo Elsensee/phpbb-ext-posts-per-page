@@ -55,4 +55,7 @@ services:
       - '@user'
       - '%elsensee.postsperpage.settings%'
     tags:
-      - name: event.listener
+      - name: event.listener    
+      
+    _defaults:
+        public:true
