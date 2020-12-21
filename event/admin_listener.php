@@ -85,7 +85,6 @@ class admin_listener implements EventSubscriberInterface
 		// Don't need a validate_event_call() because it would check if max is set but we want to set max here
 		if ($event['mode'] != 'post')
 		{
-			// Sorry, didn't want to interrupt you
 			return;
 		}
 
@@ -96,6 +95,7 @@ class admin_listener implements EventSubscriberInterface
 		$own_vars = array();
 		foreach ($this->settings as $setting)
 		{
+			// For every own setting there is an array, which tells us, on which page it is active
 			if (!in_array($page, $setting['pages']))
 			{
 				continue;
@@ -106,7 +106,7 @@ class admin_listener implements EventSubscriberInterface
 		}
 
 		// Insert our own_vars array right after posts_per_page to let them appear right there.
-		$vars['vars'] = $this->helper->array_insert($vars['vars'], array_search($this->acp_position, array_keys($vars['vars'])) + 1, $own_vars);
+		$vars['vars'] = phpbb_insert_config_array($vars['vars'], $own_vars, ['after' => $this->acp_position]);
 
 		$event['display_vars'] = $vars;
 	}

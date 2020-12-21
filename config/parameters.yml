@@ -15,7 +15,7 @@ parameters:
             max_lang: PPP_TOPICS_PER_PAGE_MAXIMUM
             # data_row_config is the name of the column of the user setting
             data_row_config: user_topics_per_page
-            # normal_config is the config name which will be used normally
+            # normal_config is the config name which will be used normally (in the original phpBB)
             normal_config: topics_per_page
             # auth (doesn't exist at this place) is an array of authentications that the user must be granted in order to set this setting
             # pages is an array of pages on which this setting will be somehow active or appear
@@ -39,7 +39,7 @@ parameters:
             max_lang: PPP_TOPIC_POSTS_PER_PAGE_MAXIMUM
             data_row_config: topic_posts_per_page
             normal_config: posts_per_page
-            auth: [u_topic_ppp]
+            auth: [u_topic_ppp, f_topic_ppp]
             pages: [acp_board, posting, viewforum, viewtopic]
 
     elsensee.postsperpage.acp_position: posts_per_page

@@ -25,14 +25,14 @@ class listener implements EventSubscriberInterface
 	/** @var array */
 	protected $old_config;
 
-	/** @var \phpbb\controller\helper */
-	protected $controller_helper;
-
 	/** @var \phpbb\db\driver\driver_interface */
 	protected $db;
 
 	/** @var \elsensee\postsperpage\helper */
 	protected $helper;
+
+	/** @var string */
+	protected $php_ext;
 
 	/** @var \phpbb\request\request */
 	protected $request;
@@ -47,20 +47,20 @@ class listener implements EventSubscriberInterface
 	 * Constructor
 	 *
 	 * @param \phpbb\config\config				$config				Configuration object
-	 * @param \phpbb\controller\helper			$controller_helper	Controller helper object
 	 * @param \phpbb\db\driver\driver_interface	$db					phpBB DBAL object
 	 * @param \elsensee\postsperpage\helper		$helper				Helper object
 	 * @param \phpbb\request\request			$request			Request object
 	 * @param \phpbb\user						$user				User object
+	 * @param string							$php_ext			The PHP extension
 	 * @param array								$settings			Settings with key, title, explain language key, minimum and maximum config variable key
 	 */
-	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $controller_helper, \phpbb\db\driver\driver_interface $db, \elsensee\postsperpage\helper $helper, \phpbb\request\request $request, \phpbb\user $user, array $settings)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \elsensee\postsperpage\helper $helper, \phpbb\request\request $request, \phpbb\user $user, $php_ext, array $settings)
 	{
 		$this->config = $config;
 		$this->old_config = array(); // Learning the difference between an array and an object implementing ArrayAccess...
-		$this->controller_helper = $controller_helper;
 		$this->db = $db;
 		$this->helper = $helper;
+		$this->php_ext = $php_ext;
 		$this->request = $request;
 		$this->settings = $settings;
 		$this->user = $user;
@@ -95,6 +95,7 @@ class listener implements EventSubscriberInterface
 	{
 		$event['permissions'] = array_merge($event['permissions'], array(
 			'u_topic_ppp'	=> array('lang' => 'ACL_U_TOPIC_PPP', 'cat' => 'post'),
+			'f_topic_ppp'	=> array('lang' => 'ACL_U_TOPIC_PPP', 'cat' => 'post'),
 		));
 	}
 
@@ -107,15 +108,15 @@ class listener implements EventSubscriberInterface
 	*/
 	public function modify_per_page_config($event)
 	{
-		$current_url = $this->controller_helper->get_current_url();
-		if (defined('ADMIN_START') || stripos($current_url, 'ucp.php') !== false || stripos($current_url, 'posting.php') !== false)
+		$current_page = $this->user->page['page_name'];
+		if (defined('ADMIN_START') || stripos($current_page, 'ucp.' . $this->php_ext) !== false || stripos($current_page, 'posting.' . $this->php_ext) !== false)
 		{
 			// We may not modify it here - we would get unexpected results.
 			return;
 		}
 
 		$changed = false;
-		if (stripos($current_url, 'viewtopic.php') !== false)
+		if (stripos($current_page, 'viewtopic.' . $this->php_ext) !== false)
 		{
 			// We'll have to handle viewtopic differently - much much differently
 			$setting = $this->settings['topic_posts_pp'];
@@ -124,7 +125,6 @@ class listener implements EventSubscriberInterface
 			{
 				$post_id = (int) $this->request->variable('p', 0);
 				$topic_id = (int) $this->request->variable('t', 0);
-
 				if ($post_id)
 				{
 					$sql_array = array(

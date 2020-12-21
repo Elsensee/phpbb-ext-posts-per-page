@@ -50,23 +50,6 @@ class helper
 	}
 
 	/**
-	 * Inserts an array into an array at a specified offset and keeps the keys.
-	 * (array_splice wouldn't allow keeping the keys)
-	 * See: http://php.net/manual/en/function.array-splice.php#56794
-	 *
-	 * @param array	$input			The input array.
-	 * @param int	$offset			Specifies the offset at which the array should be inserted at.
-	 * @param array	$insertion		The array which should be inserted.
-	 * @return array
-	 * @access public
-	 */
-	public function array_insert($input, $offset, $insertion)
-	{
-		$first_array = array_splice($input, 0, $offset);
-		return array_merge($first_array, $insertion, $input);
-	}
-
-	/**
 	 * Validates if the event call is okay because there is indeed work to do
 	 * Just checks if at least one config var is not set to 0
 	 *
@@ -82,7 +65,7 @@ class helper
 		{
 			if (in_array($page, $setting['pages']) && $this->config[$setting['max']])
 			{
-				if (!$check_auth || !isset($setting['auth']) || (isset($setting['auth']) && $this->auth->acl_gets($setting['auth'], $f)))
+				if (!$check_auth || !isset($setting['auth']) || $this->auth->acl_gets($setting['auth'], $f))
 				{
 					return true;
 				}

@@ -10,6 +10,7 @@ services:
       - '%core.php_ext%'
       - '%core.root_path%'
       - '%elsensee.postsperpage.settings%'
+
   elsensee.postsperpage.admin_listener:
     class: elsensee\postsperpage\event\admin_listener
     arguments:
@@ -20,19 +21,21 @@ services:
       - '%elsensee.postsperpage.settings%'
       - '%elsensee.postsperpage.acp_position%'
     tags:
-      - name: event.listener
+      - { name: event.listener }
+
   elsensee.postsperpage.listener:
     class: elsensee\postsperpage\event\listener
     arguments:
       - '@config'
-      - '@controller.helper'
       - '@dbal.conn'
       - '@elsensee.postsperpage.helper'
       - '@request'
       - '@user'
+      - '%core.php_ext%'
       - '%elsensee.postsperpage.settings%'
     tags:
-      - name: event.listener
+      - { name: event.listener }
+
   elsensee.postsperpage.posting_listener:
     class: elsensee\postsperpage\event\posting_listener
     arguments:
@@ -44,7 +47,8 @@ services:
       - '@template'
       - '%elsensee.postsperpage.settings%'
     tags:
-      - name: event.listener
+      - { name: event.listener }
+
   elsensee.postsperpage.user_listener:
     class: elsensee\postsperpage\event\user_listener
     arguments:
@@ -55,7 +59,4 @@ services:
       - '@user'
       - '%elsensee.postsperpage.settings%'
     tags:
-      - name: event.listener    
-      
-    _defaults:
-        public:true
+      - { name: event.listener }
