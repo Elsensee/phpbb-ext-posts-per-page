@@ -2,7 +2,7 @@
 /**
  *
  * @package Individual posts per page
- * @copyright (c) 2015-2018 Oliver Schramm
+ * @copyright (c) 2015-2020 Oliver Schramm
  * @license http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
  */
@@ -106,7 +106,7 @@ class admin_listener implements EventSubscriberInterface
 		}
 
 		// Insert our own_vars array right after posts_per_page to let them appear right there.
-		$vars['vars'] = phpbb_insert_config_array($vars['vars'], $own_vars, ['after' => $this->acp_position]);
+		$vars['vars'] = phpbb_insert_config_array($vars['vars'], $own_vars, array('after' => $this->acp_position));
 
 		$event['display_vars'] = $vars;
 	}
