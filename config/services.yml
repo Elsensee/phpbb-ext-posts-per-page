@@ -1,63 +1,61 @@
 imports:
-    - { resource: parameters.yml }
-
+  - resource: parameters.yml
 services:
-    elsensee.postsperpage.helper:
-        class: elsensee\postsperpage\helper
-        arguments:
-            - @auth
-            - @config
-            - @request
-            - %core.php_ext%
-            - %core.root_path%
-            - %elsensee.postsperpage.settings%
-
-    elsensee.postsperpage.admin_listener:
-        class: elsensee\postsperpage\event\admin_listener
-        arguments:
-            - @config
-            - @language
-            - @elsensee.postsperpage.helper
-            - @template
-            - %elsensee.postsperpage.settings%
-            - %elsensee.postsperpage.acp_position%
-        tags:
-            - { name: event.listener }
-
-    elsensee.postsperpage.listener:
-        class: elsensee\postsperpage\event\listener
-        arguments:
-            - @config
-            - @controller.helper
-            - @dbal.conn
-            - @elsensee.postsperpage.helper
-            - @request
-            - @user
-            - %elsensee.postsperpage.settings%
-        tags:
-            - { name: event.listener }
-
-    elsensee.postsperpage.posting_listener:
-        class: elsensee\postsperpage\event\posting_listener
-        arguments:
-            - @auth
-            - @config
-            - @dbal.conn
-            - @elsensee.postsperpage.helper
-            - @language
-            - @template
-            - %elsensee.postsperpage.settings%
-        tags:
-        - { name: event.listener }
-
-    elsensee.postsperpage.user_listener:
-        class: elsensee\postsperpage\event\user_listener
-        arguments:
-            - @config
-            - @elsensee.postsperpage.helper
-            - @language
-            - @template
-            - @user
-            - %elsensee.postsperpage.settings%
-        tags:
-        - { name: event.listener }
+  elsensee.postsperpage.helper:
+    class: elsensee\postsperpage\helper
+    arguments:
+      - '@auth'
+      - '@config'
+      - '@request'
+      - '%core.php_ext%'
+      - '%core.root_path%'
+      - '%elsensee.postsperpage.settings%'
+  elsensee.postsperpage.admin_listener:
+    class: elsensee\postsperpage\event\admin_listener
+    arguments:
+      - '@config'
+      - '@language'
+      - '@elsensee.postsperpage.helper'
+      - '@template'
+      - '%elsensee.postsperpage.settings%'
+      - '%elsensee.postsperpage.acp_position%'
+    tags:
+      - name: event.listener
+  elsensee.postsperpage.listener:
+    class: elsensee\postsperpage\event\listener
+    arguments:
+      - '@config'
+      - '@controller.helper'
+      - '@dbal.conn'
+      - '@elsensee.postsperpage.helper'
+      - '@request'
+      - '@user'
+      - '%elsensee.postsperpage.settings%'
+    tags:
+      - name: event.listener
+  elsensee.postsperpage.posting_listener:
+    class: elsensee\postsperpage\event\posting_listener
+    arguments:
+      - '@auth'
+      - '@config'
+      - '@dbal.conn'
+      - '@elsensee.postsperpage.helper'
+      - '@language'
+      - '@template'
+      - '%elsensee.postsperpage.settings%'
+    tags:
+      - name: event.listener
+  elsensee.postsperpage.user_listener:
+    class: elsensee\postsperpage\event\user_listener
+    arguments:
+      - '@config'
+      - '@elsensee.postsperpage.helper'
+      - '@language'
+      - '@template'
+      - '@user'
+      - '%elsensee.postsperpage.settings%'
+    tags:
+      - name: event.listener    
+      
+    _defaults:
+        public:true
