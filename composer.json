@@ -9,14 +9,13 @@
 	"authors": [
 		{
 			"name": "Oliver Schramm",
-			"email": "elsensee@phpbb.com",
-			"homepage": "https://www.oliver-schramm.eu",
+			"email": "phpbb@oliver-schramm.eu",
 			"role": "Lead Developer"
 		},
 		{
 			"name": "Martin Beckmann",
 			"email": "gn#36@phpbb.de",
-			"role": "Developer"
+			"role": "Former Developer"
 		}
 	],
 	"require": {
